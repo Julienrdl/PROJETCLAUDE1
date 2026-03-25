@@ -1,1 +1,5 @@
-.next\nnode_modules\nuploads\ndata\n*.db
+.next
+node_modules
+uploads
+data
+*.db
