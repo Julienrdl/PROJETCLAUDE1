@@ -1,19 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFile, mkdir } from 'fs/promises';
-import path from 'path';
 import { query, execute, initDb } from '@/lib/db';
 import { getUserFromRequest } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
   try {
-    initDb();
+    await initDb();
     const user = getUserFromRequest(request);
     if (!user) {
       return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
     }
 
     const url = new URL(request.url);
-    const month = url.searchParams.get('month'); // format: YYYY-MM
+    const month = url.searchParams.get('month');
     const status = url.searchParams.get('status');
 
     let sql = `
@@ -36,7 +34,7 @@ export async function GET(request: NextRequest) {
 
     sql += ` ORDER BY i.created_at DESC`;
 
-    const invoices = query(sql, params);
+    const invoices = await query(sql, params);
     return NextResponse.json({ invoices });
   } catch (error) {
     console.error('Get invoices error:', error);
@@ -46,13 +44,12 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    initDb();
+    await initDb();
     const user = getUserFromRequest(request);
     if (!user) {
       return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
     }
 
-    // Only rose can upload invoices
     if (user.role !== 'rose') {
       return NextResponse.json({ error: 'Seule Rose peut téléverser des factures' }, { status: 403 });
     }
@@ -72,21 +69,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Seuls les fichiers PDF sont acceptés' }, { status: 400 });
     }
 
-    // Save file
-    const uploadsDir = path.join(process.cwd(), 'uploads');
-    await mkdir(uploadsDir, { recursive: true });
-
-    const timestamp = Date.now();
-    const filename = `invoice_${timestamp}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-    const filePath = path.join(uploadsDir, filename);
-
     const bytes = await file.arrayBuffer();
-    await writeFile(filePath, Buffer.from(bytes));
+    const base64 = Buffer.from(bytes).toString('base64');
+    const filename = `invoice_${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
 
-    const result = execute(
-      `INSERT INTO invoices (filename, original_name, supplier, amount, invoice_date, description, uploaded_by)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [filename, file.name, supplier, amount ? parseFloat(amount) : null, invoiceDate || null, description || null, user.id]
+    const result = await execute(
+      `INSERT INTO invoices (filename, original_name, supplier, amount, invoice_date, description, uploaded_by, pdf_data)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [filename, file.name, supplier, amount ? parseFloat(amount) : null, invoiceDate || null, description || null, user.id, base64]
     );
 
     return NextResponse.json({ id: result.lastInsertRowid }, { status: 201 });
