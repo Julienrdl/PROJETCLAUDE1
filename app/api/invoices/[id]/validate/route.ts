@@ -13,7 +13,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    initDb();
+    await initDb();
     const user = getUserFromRequest(request);
     if (!user) {
       return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
@@ -26,16 +26,11 @@ export async function POST(
       return NextResponse.json({ error: 'Action invalide' }, { status: 400 });
     }
 
-    // Check user can validate at this step
     if (!ROLE_TO_STATUS[user.role]) {
-      return NextResponse.json({ error: 'Vous n\'êtes pas autorisé à valider' }, { status: 403 });
+      return NextResponse.json({ error: "Vous n'êtes pas autorisé à valider" }, { status: 403 });
     }
 
-    const invoice = queryOne<Invoice>(
-      'SELECT * FROM invoices WHERE id = ?',
-      [id]
-    );
-
+    const invoice = await queryOne<Invoice>('SELECT * FROM invoices WHERE id = ?', [id]);
     if (!invoice) {
       return NextResponse.json({ error: 'Facture non trouvée' }, { status: 404 });
     }
@@ -48,16 +43,14 @@ export async function POST(
       );
     }
 
-    // Record validation
-    execute(
+    await execute(
       `INSERT INTO validations (invoice_id, validator_id, step, action, comment, pdf_annotations)
        VALUES (?, ?, ?, ?, ?, ?)`,
       [id, user.id, ROLE_TO_STEP[user.role], action, comment || null, annotations ? JSON.stringify(annotations) : null]
     );
 
-    // Update invoice status
     const newStatus = action === 'approved' ? NEXT_STATUS[user.role] : 'rejected';
-    execute(
+    await execute(
       `UPDATE invoices SET status = ?, updated_at = datetime('now') WHERE id = ?`,
       [newStatus, id]
     );
