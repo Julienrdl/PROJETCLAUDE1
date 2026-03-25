@@ -1,26 +1,15 @@
-import Database from 'better-sqlite3';
-import path from 'path';
-import fs from 'fs';
-
-const DB_PATH = path.join(process.cwd(), 'data', 'disolar.db');
+import { createClient } from '@libsql/client';
 
 function getDb() {
-  // Ensure data directory exists
-  const dataDir = path.join(process.cwd(), 'data');
-  if (!fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir, { recursive: true });
-  }
-
-  const db = new Database(DB_PATH);
-  db.pragma('journal_mode = WAL');
-  db.pragma('foreign_keys = ON');
-  return db;
+  const url = process.env.TURSO_DATABASE_URL;
+  const authToken = process.env.TURSO_AUTH_TOKEN;
+  if (!url) throw new Error('TURSO_DATABASE_URL is not set');
+  return createClient({ url, authToken });
 }
 
-export function initDb() {
+export async function initDb() {
   const db = getDb();
-
-  db.exec(`
+  await db.executeMultiple(`
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL,
@@ -29,7 +18,6 @@ export function initDb() {
       role TEXT NOT NULL CHECK(role IN ('rose', 'owner', 'rajaa', 'accountant')),
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
-
     CREATE TABLE IF NOT EXISTS invoices (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       filename TEXT NOT NULL,
@@ -40,10 +28,10 @@ export function initDb() {
       description TEXT,
       status TEXT NOT NULL DEFAULT 'pending_rose' CHECK(status IN ('pending_rose', 'pending_owner', 'pending_rajaa', 'validated', 'rejected')),
       uploaded_by INTEGER NOT NULL REFERENCES users(id),
+      pdf_data TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
-
     CREATE TABLE IF NOT EXISTS validations (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       invoice_id INTEGER NOT NULL REFERENCES invoices(id),
@@ -54,63 +42,44 @@ export function initDb() {
       pdf_annotations TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
-
     CREATE TABLE IF NOT EXISTS pdf_edits (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       invoice_id INTEGER NOT NULL REFERENCES invoices(id),
       editor_id INTEGER NOT NULL REFERENCES users(id),
       filename TEXT NOT NULL,
       annotations TEXT,
+      pdf_data TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
   `);
-
-  // Seed default users if none exist
-  const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get() as { count: number };
-  if (userCount.count === 0) {
+  const result = await db.execute('SELECT COUNT(*) as count FROM users');
+  const count = Number(result.rows[0][0]);
+  if (count === 0) {
     const bcrypt = require('bcryptjs');
     const defaultPassword = bcrypt.hashSync('disolar2024', 10);
-
-    const insert = db.prepare(`
-      INSERT INTO users (name, email, password_hash, role)
-      VALUES (?, ?, ?, ?)
-    `);
-
-    insert.run('Rose', 'rmartin@die.fr', defaultPassword, 'rose');
-    insert.run('Julien', 'jroudil@die.fr', defaultPassword, 'owner');
-    insert.run('Rajaa', 'accueil@gmc2.fr', defaultPassword, 'rajaa');
-    insert.run('Maëlle Taulelle', 'maelle.taulelle@fidsud.fr', defaultPassword, 'accountant');
-  }
-
-  db.close();
-}
-
-export function query<T>(sql: string, params: unknown[] = []): T[] {
-  const db = getDb();
-  try {
-    const stmt = db.prepare(sql);
-    return stmt.all(...params) as T[];
-  } finally {
-    db.close();
+    await db.batch([
+      { sql: 'INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)', args: ['Rose', 'rmartin@die.fr', defaultPassword, 'rose'] },
+      { sql: 'INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)', args: ['Julien', 'jroudil@die.fr', defaultPassword, 'owner'] },
+      { sql: 'INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)', args: ['Rajaa', 'accueil@gmc2.fr', defaultPassword, 'rajaa'] },
+      { sql: 'INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)', args: ['Maëlle Taulelle', 'maelle.taulelle@fidsud.fr', defaultPassword, 'accountant'] },
+    ]);
   }
 }
 
-export function queryOne<T>(sql: string, params: unknown[] = []): T | null {
+export async function query<T>(sql: string, params: unknown[] = []): Promise<T[]> {
   const db = getDb();
-  try {
-    const stmt = db.prepare(sql);
-    return (stmt.get(...params) as T) || null;
-  } finally {
-    db.close();
-  }
+  const result = await db.execute({ sql, args: params });
+  return result.rows as unknown as T[];
 }
 
-export function execute(sql: string, params: unknown[] = []): Database.RunResult {
+export async function queryOne<T>(sql: string, params: unknown[] = []): Promise<T | null> {
   const db = getDb();
-  try {
-    const stmt = db.prepare(sql);
-    return stmt.run(...params);
-  } finally {
-    db.close();
-  }
+  const result = await db.execute({ sql, args: params });
+  return (result.rows[0] as unknown as T) || null;
+}
+
+export async function execute(sql: string, params: unknown[] = []): Promise<{ lastInsertRowid: number | bigint }> {
+  const db = getDb();
+  const result = await db.execute({ sql, args: params });
+  return { lastInsertRowid: result.lastInsertRowid ?? 0 };
 }
