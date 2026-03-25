@@ -17,15 +17,15 @@ interface Invoice {
 
 export async function GET(request: NextRequest) {
   try {
-    initDb();
+    await initDb();
     const user = getUserFromRequest(request);
     if (!user) {
       return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
     }
 
     const url = new URL(request.url);
-    const month = url.searchParams.get('month'); // YYYY-MM
-    const format = url.searchParams.get('format') || 'json'; // json or csv
+    const month = url.searchParams.get('month');
+    const format = url.searchParams.get('format') || 'json';
 
     let sql = `
       SELECT i.id, i.original_name, i.supplier, i.amount, i.invoice_date,
@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
 
     sql += ` ORDER BY i.invoice_date ASC, i.created_at ASC`;
 
-    const invoices = query<Invoice>(sql, params);
+    const invoices = await query<Invoice>(sql, params);
 
     if (format === 'csv') {
       const headers = ['ID', 'Fournisseur', 'Montant (€)', 'Date Facture', 'Description', 'Fichier', 'Ajouté par', 'Date Ajout'];
@@ -69,14 +69,8 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // JSON export with totals
     const total = invoices.reduce((sum, inv) => sum + (inv.amount || 0), 0);
-    return NextResponse.json({
-      month,
-      count: invoices.length,
-      total: total,
-      invoices,
-    });
+    return NextResponse.json({ month, count: invoices.length, total, invoices });
   } catch (error) {
     console.error('Export error:', error);
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
