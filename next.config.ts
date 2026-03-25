@@ -1,8 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ['bcryptjs'],
-  output: 'standalone',
+  serverExternalPackages: ['bcryptjs', '@libsql/client'],
+  experimental: {
+    turbo: {
+      rules: {}
+    }
+  }
 };
 
 export default nextConfig;
