@@ -7,15 +7,17 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    initDb();
+    await initDb();
     const user = getUserFromRequest(request);
     if (!user) {
       return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
     }
 
     const { id } = await params;
-    const invoice = queryOne(
-      `SELECT i.*, u.name as uploader_name
+    const invoice = await queryOne(
+      `SELECT i.id, i.filename, i.original_name, i.supplier, i.amount, i.invoice_date,
+              i.description, i.status, i.uploaded_by, i.created_at, i.updated_at,
+              u.name as uploader_name
        FROM invoices i
        JOIN users u ON i.uploaded_by = u.id
        WHERE i.id = ?`,
@@ -26,7 +28,7 @@ export async function GET(
       return NextResponse.json({ error: 'Facture non trouvée' }, { status: 404 });
     }
 
-    const validations = query(
+    const validations = await query(
       `SELECT v.*, u.name as validator_name, u.role as validator_role
        FROM validations v
        JOIN users u ON v.validator_id = u.id
@@ -35,7 +37,7 @@ export async function GET(
       [id]
     );
 
-    const pdfEdits = query(
+    const pdfEdits = await query(
       `SELECT pe.*, u.name as editor_name
        FROM pdf_edits pe
        JOIN users u ON pe.editor_id = u.id
