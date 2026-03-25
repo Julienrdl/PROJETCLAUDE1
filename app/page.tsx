@@ -109,10 +109,10 @@ export default function LoginPage() {
         <div className="mt-6 p-4 bg-gray-50 rounded-xl text-xs text-gray-500">
           <p className="font-medium mb-2 text-gray-700">Comptes disponibles :</p>
           <div className="space-y-1">
-            <p>• rose@disolar.fr — Rose (Assistante)</p>
-            <p>• directeur@disolar.fr — Directeur</p>
-            <p>• rajaa@disolar.fr — Rajaa</p>
-            <p>• comptable@disolar.fr — Cabinet Comptable</p>
+            <p>• rmartin@die.fr — Rose (Assistante)</p>
+            <p>• jroudil@die.fr — Julien (Directeur)</p>
+            <p>• accueil@gmc2.fr — Rajaa</p>
+            <p>• maelle.taulelle@fidsud.fr — Maëlle (Comptable)</p>
           </div>
           <p className="mt-2 text-gray-400">Mot de passe par défaut : <strong>disolar2024</strong></p>
         </div>

@@ -76,10 +76,10 @@ export function initDb() {
       VALUES (?, ?, ?, ?)
     `);
 
-    insert.run('Rose', 'rose@disolar.fr', defaultPassword, 'rose');
-    insert.run('Directeur DI SOLAR', 'directeur@disolar.fr', defaultPassword, 'owner');
-    insert.run('Rajaa', 'rajaa@disolar.fr', defaultPassword, 'rajaa');
-    insert.run('Cabinet Comptable', 'comptable@disolar.fr', defaultPassword, 'accountant');
+    insert.run('Rose', 'rmartin@die.fr', defaultPassword, 'rose');
+    insert.run('Julien', 'jroudil@die.fr', defaultPassword, 'owner');
+    insert.run('Rajaa', 'accueil@gmc2.fr', defaultPassword, 'rajaa');
+    insert.run('Maëlle Taulelle', 'maelle.taulelle@fidsud.fr', defaultPassword, 'accountant');
   }
 
   db.close();
