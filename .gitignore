@@ -4,3 +4,5 @@ uploads
 data
 *.db
 dist/
+.env
+tsconfig.tsbuildinfo

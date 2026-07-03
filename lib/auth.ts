@@ -3,9 +3,9 @@ import { NextRequest } from 'next/server';
 import { UserPayload } from './constants';
 
 export type { UserPayload } from './constants';
-export { ROLE_LABELS, STATUS_LABELS, STATUS_COLORS, ROLE_TO_STEP, ROLE_TO_STATUS, NEXT_STATUS } from './constants';
+export { ROLE_LABELS } from './constants';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'disolar-secret-key-2024';
+const JWT_SECRET = process.env.JWT_SECRET || 'jmga-secret-key-2024';
 
 export function signToken(payload: UserPayload): string {
   return jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' });

@@ -8,7 +8,7 @@ interface DbUser {
   name: string;
   email: string;
   password_hash: string;
-  role: 'rose' | 'owner' | 'rajaa' | 'accountant';
+  role: 'bureau' | 'poseur';
 }
 
 export async function POST(request: NextRequest) {

@@ -44,13 +44,12 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100 flex items-center justify-center -mt-8 -mx-4 sm:-mx-6 lg:-mx-8 px-4">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-8">
-        {/* Logo */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-amber-500 rounded-2xl mb-4">
             <Sun size={32} className="text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">DI SOLAR</h1>
-          <p className="text-gray-500 text-sm mt-1">Validation des factures fournisseurs</p>
+          <h1 className="text-2xl font-bold text-gray-900">JMGA</h1>
+          <p className="text-gray-500 text-sm mt-1">Suivi des chantiers photovoltaïques</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
@@ -64,7 +63,7 @@ export default function LoginPage() {
               onChange={e => setEmail(e.target.value)}
               required
               className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none transition"
-              placeholder="vous@disolar.fr"
+              placeholder="vous@jmga.fr"
             />
           </div>
 
@@ -105,17 +104,6 @@ export default function LoginPage() {
             {loading ? 'Connexion...' : 'Se connecter'}
           </button>
         </form>
-
-        <div className="mt-6 p-4 bg-gray-50 rounded-xl text-xs text-gray-500">
-          <p className="font-medium mb-2 text-gray-700">Comptes disponibles :</p>
-          <div className="space-y-1">
-            <p>• rmartin@die.fr — Rose (Assistante)</p>
-            <p>• jroudil@die.fr — Julien (Directeur)</p>
-            <p>• accueil@gmc2.fr — Rajaa</p>
-            <p>• maelle.taulelle@fidsud.fr — Maëlle (Comptable)</p>
-          </div>
-          <p className="mt-2 text-gray-400">Mot de passe par défaut : <strong>disolar2024</strong></p>
-        </div>
       </div>
     </div>
   );

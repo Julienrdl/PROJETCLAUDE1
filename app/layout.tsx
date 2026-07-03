@@ -4,8 +4,8 @@ import { AuthProvider } from '@/components/AuthProvider';
 import { Navbar } from '@/components/Navbar';
 
 export const metadata: Metadata = {
-  title: 'DI SOLAR - Validation Factures',
-  description: 'Workflow de validation des factures fournisseurs',
+  title: 'JMGA - Suivi de chantiers',
+  description: 'Planning et suivi des poses et interventions photovoltaïques JMGA',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
